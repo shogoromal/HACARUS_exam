@@ -1,5 +1,5 @@
 # src/config.py
 src/.env
-# src/sql_sample.py
-src/__pychache__
-notebooks
+src/__pycache__
+.Trash-0
+notebooks/.ipynb_checkpoints

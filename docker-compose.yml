@@ -8,7 +8,7 @@ services:
     volumes:
       - ./python_backend:/python_backend
     ports:
-      - 8080:8080
+      - 8081:8081
       - 8888:8888
     # ホットリロードを有効化
     environment:
@@ -25,8 +25,8 @@ services:
 
   mysql:
     build: ./MySQL #Dockerfileからビルドすることを示す
-    #volumes:
-    #  - ./mysql/DB:/docker-entrypoint-initdb.d #初期に実行するsql文を指定する
+    volumes:
+      - ./mysql/DB:/docker-entrypoint-initdb.d #初期に実行するsql文を指定する
     image: test_mysql_hacarus # イメージの名前
     environment:
       - MYSQL_ROOT_PASSWORD=mypassword   #コンテナ内のMySQLを起動する際のパスワードを設定
