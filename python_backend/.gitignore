@@ -1,0 +1,5 @@
+# src/config.py
+src/.env
+# src/sql_sample.py
+src/__pychache__
+notebooks
