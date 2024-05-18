@@ -34,14 +34,22 @@ class PassengerData(BaseModel):
     Age: Union[int, None]  = None
     Fare: Union[float, None]  = None
 
-class DataIndex(BaseModel):
-    start_index:int
-    end_index:int
+class DataRequestBody(BaseModel):
+    start_index:int = None
+    end_index:int = None
+    my_model_name:str = 'no_name'
+
+class ModelRequestBody(BaseModel):
+    version_id_1:int
+    version_id_2:int = None
+    start_index:int = None
+    end_index:int = None
 
 class sql_ModelParameter(Base):
     __tablename__ = 'models'
     model_version_id = Column(Integer, primary_key=True, autoincrement=True)
     training_date = Column(DateTime)
+    my_model_name = Column(Text)
     pclass_coef = Column(Float, nullable=False)
     sex_coef = Column(Float, nullable=False)
     age_coef = Column(Float, nullable=False)
