@@ -26,6 +26,33 @@ class sql_PassengerData(Base):
             'Age': self.age,
             'Fare': self.fare            
         }
+class sql_ModelParameter(Base):
+    __tablename__ = 'models'
+    model_version_id = Column(Integer, primary_key=True, autoincrement=True)
+    training_date = Column(DateTime)
+    my_model_name = Column(Text)
+    pclass_coef = Column(Float, nullable=False)
+    sex_coef = Column(Float, nullable=False)
+    age_coef = Column(Float, nullable=False)
+    fare_coef = Column(Float, nullable=False)
+    training_iteration = Column(Integer, nullable=False)
+    def toDict(self):
+        return{
+            'mode]_version_id': self.model_version_id,
+            'my_model_name': self.my_model_name,
+            'pclass_coef': self.pclass_coef,
+            'sex_coef': self.sex_coef,
+            'age_coef': self.age_coef,
+            'fare_coef': self.age_coef
+        }
+    
+class sql_Relation(Base):
+    __tablename__ = 'data_model_relations'
+    experiment_id = Column(Integer, primary_key=True, autoincrement=True)
+    model_version_id = Column(Integer, nullable=False)
+    data_id = Column(Integer, nullable=False)
+    include_training = Column(Boolean, nullable=False)
+    prediction_score = Column(Float, nullable=False)
 
 class PassengerData(BaseModel):
     Survived: Union[int, None]  = None
@@ -44,22 +71,9 @@ class ModelRequestBody(BaseModel):
     version_id_2:int = None
     start_index:int = None
     end_index:int = None
-
-class sql_ModelParameter(Base):
-    __tablename__ = 'models'
-    model_version_id = Column(Integer, primary_key=True, autoincrement=True)
-    training_date = Column(DateTime)
-    my_model_name = Column(Text)
-    pclass_coef = Column(Float, nullable=False)
-    sex_coef = Column(Float, nullable=False)
-    age_coef = Column(Float, nullable=False)
-    fare_coef = Column(Float, nullable=False)
-    training_iteration = Column(Integer, nullable=False)
     
-class sql_Relation(Base):
-    __tablename__ = 'data_model_relations'
-    experiment_id = Column(Integer, primary_key=True, autoincrement=True)
-    model_version_id = Column(Integer, nullable=False)
-    data_id = Column(Integer, nullable=False)
-    include_training = Column(Boolean, nullable=False)
-    prediction_score = Column(Float, nullable=False)
+class GraphSetting():
+    def __init__(self):
+        self.colors = ['blue','red','green','yellow']
+        self.bins = {'Fare':20}
+        self.hist_graph = ['Age', 'Fare']

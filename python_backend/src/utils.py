@@ -2,6 +2,7 @@ from typing import List
 from base_class import PassengerData, DataRequestBody, ModelRequestBody
 
 import pandas as pd
+import numpy as np
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -46,11 +47,11 @@ def validation_training_data(df:pd.DataFrame, test_size=0):
         X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size, random_state=42)
         return X_train, X_test, y_train, y_test
     return X_train, y_train
-
+"""
 def calculate_accuracy(model,X_test,y_test):
     predictions = model.predict(X_test)
     return accuracy_score(y_test, predictions)
-
+"""
 def make_trained_model(df:pd.DataFrame, test_size=0):
     if test_size == 0:
         X_train, y_train = validation_training_data(df,test_size) #test_size=0で指定したデータ全てをトレーニングに使う
@@ -60,12 +61,24 @@ def make_trained_model(df:pd.DataFrame, test_size=0):
     model.fit(X_train, y_train)
     return model
 
+#index番号からdataを取得
 def get_psg_cls_list(start_index:int, end_index:int):
     data_index_list = [i for i in range(start_index, end_index)]
     result_list = []
     results = get_passenger_data(data_index_list)
     for result in results:
         result_list.append(result)
+    return result_list
+
+def get_model_cls_list(id_1:int, id_2:int=None):
+    results = get_passenger_data(id_1)
+    result_list = []
+    for result in results:
+        result_list.append(result)
+    if id_2 is not None:
+        results = get_passenger_data(id_2)
+        for result in results:
+            result_list.append(result)
     return result_list 
 
 def get_training_used_datas(model_version_id:int):
@@ -77,7 +90,7 @@ def get_training_used_datas(model_version_id:int):
 
 def inference_to_new_data(version_id:int, start_index:int, end_index:int, datas_for_analysis:List[PassengerData]):
     ###推論していないdataに対して推論を行う###
-    #モデルidからトレーニング時に使ったデータを取得
+    #モデルidからトレーニング時に使ったデータを取得、dfで返される
     training_used_data_df = get_training_used_datas(version_id)
     #再度、トレーニングを実施してモデルを再現する
     model = make_trained_model(training_used_data_df)
@@ -87,3 +100,6 @@ def inference_to_new_data(version_id:int, start_index:int, end_index:int, datas_
     ###推論結果を格納したデータベースから結果を取得する###
     inference_results = get_data_model_relation(version_id,False,start_index,end_index)
     return training_used_data_df, inference_results
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))

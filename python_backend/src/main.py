@@ -10,11 +10,11 @@ from base_class import PassengerData, DataRequestBody, ModelRequestBody
 from typing import List
 
 from sql_manipulate import \
-    add_passenger_data, add_model_parameter, add_data_model_relation
+    add_passenger_data, add_model_parameter, add_data_model_relation, reset_db
 from utils import \
-    sql_psg_class_to_df, make_trained_model, dataframe_to_dict, get_psg_cls_list, inference_to_new_data
+    sql_psg_class_to_df, make_trained_model, dataframe_to_dict, get_psg_cls_list, get_model_cls_list, inference_to_new_data
 from visualize import\
-    plot_histograms
+    plot_model_check_graphs, plot_inference_result_graphs
 
 jst = pytz.timezone('Asia/Tokyo')#タイムゾーンを日本に設定
 load_dotenv() 
@@ -41,6 +41,11 @@ def GetData(data_request:DataRequestBody):
     result_list = get_psg_cls_list(data_request.start_index, data_request.end_index)
     return result_list #sqlalchemyのBaseクラス、ただしリクエストの結果として返されるのはjsonを示す文字列のバイナリデータ
 
+@app.post("/get_model")
+def GetData(data_request:ModelRequestBody):
+    result_list = get_model_cls_list(data_request.start_index, data_request.end_index)
+    return result_list #sqlalchemyのBaseクラス、ただしリクエストの結果として返されるのはjsonを示す文字列のバイナリデータ
+
 @app.post("/train_new_model")
 def TrainNewModel(data_request:DataRequestBody):
     extracted_passenger_datas = get_psg_cls_list(data_request.start_index, data_request.end_index)
@@ -57,19 +62,35 @@ def TrainNewModel(data_request:DataRequestBody):
 
 @app.post("/get_model_info")
 def GetModelInfo(model_request:ModelRequestBody):
+    
+    ######2つのモデルの比較を行う######
     #histを作成する関数に渡すリストを定義する
     model_id_list = [model_request.version_id_1]
-    df_list = []
+    tr_usd_psg_dict_lists = []
     #分析に使うデータを取得する
-    datas_for_analysis = get_psg_cls_list(model_request.start_index, model_request.end_index)
-    #右のデータに対して推論し、トレーニング時のデータも取得するin
-    training_used_data_df_1, inference_result_1 = inference_to_new_data(model_request.version_id_1,model_request.start_index,model_request.end_index,datas_for_analysis )
-    df_list.append(training_used_data_df_1)
-    ###モデルidの２つ目が指定されている場合は、そちらに対しても上記の操作を行う
+    target_psg_cls_list = get_psg_cls_list(model_request.start_index, model_request.end_index)
+    #分析に使うデータに対して推論し、トレーニング時のデータも取得する
+    training_used_data_df_1, inference_result_1 = inference_to_new_data(model_request.version_id_1,model_request.start_index,model_request.end_index,target_psg_cls_list)
+    tr_usd_psg_dict_lists.append(dataframe_to_dict(training_used_data_df_1))
+    #モデルidの２つ目が指定されている場合は、そちらに対しても上記の操作を行う
+    inference_result_2 = None
     if model_request.version_id_2 is not None:
-        training_used_data_df_2, inference_result_2 = inference_to_new_data(model_request.version_id_2,model_request.start_index,model_request.end_index,datas_for_analysis )
+        training_used_data_df_2, inference_result_2 = inference_to_new_data(model_request.version_id_2,model_request.start_index,model_request.end_index,target_psg_cls_list)
         model_id_list.append(model_request.version_id_2)
-        df_list.append(training_used_data_df_2)
-    #histを作成する
-    plot_histograms(df_list, model_id_list, 'compare_two_models_training_data')
-    return None
+        tr_usd_psg_dict_lists.append(dataframe_to_dict(training_used_data_df_2))
+    #modelを比較するグラフを出力
+    plot_model_check_graphs(tr_usd_psg_dict_lists, model_id_list, ['Survived', 'Pclass', 'Sex', 'Age', 'Fare'], 'compare_two_models_training_data')
+    
+    ######指定した範囲のdataに対しての推論の結果をプロットする######
+    #推論の結果をリストにまとめる
+    inference_result_list = [inference_result_1]
+    if inference_result_2 is not None:
+        inference_result_list.append(inference_result_2)
+    
+    plot_inference_result_graphs(target_psg_cls_list, inference_result_list, model_id_list, ['Survived', 'Pclass', 'Sex', 'Age', 'Fare'], 'inference_result')
+    
+    return dataframe_to_dict(training_used_data_df_1)
+
+@app.post("/reset_db")
+def ResetDB():
+    reset_db()

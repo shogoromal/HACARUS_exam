@@ -1,6 +1,7 @@
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import create_engine, desc, func, and_, or_
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.ext.declarative import declarative_base
 
 import os
 from dotenv import load_dotenv
@@ -9,7 +10,7 @@ import pytz
 import numpy as np
 import pandas as pd
 
-from base_class import PassengerData, sql_PassengerData, sql_ModelParameter, sql_Relation
+from base_class import Base, PassengerData, sql_PassengerData, sql_ModelParameter, sql_Relation
 from typing import List
 
 jst = pytz.timezone('Asia/Tokyo')#タイムゾーンを日本に設定
@@ -120,7 +121,7 @@ def add_data_model_relation(model, model_version_id:int, psg_data:sql_PassengerD
     print(e)
     db_session.rollback()
     return "false"
-#データを取得
+#データを取得、include_training->Trueはトレーニング時の推論結果登録
 def get_data_model_relation(model_version_id:int,include_training=False, start_index:int=None, end_index:int=None):
   filters = [sql_Relation.include_training.in_([True])]
   index_filters = []
@@ -139,3 +140,8 @@ def get_data_model_relation(model_version_id:int,include_training=False, start_i
     print(e)
     db_session.rollback()
     return None
+
+def reset_db():
+    # メタデータを用いてすべてのテーブルを削除し再作成
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
