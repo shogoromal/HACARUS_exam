@@ -6,11 +6,11 @@ import os
 import datetime
 import pytz
 
-from base_class import PassengerData, DataRequestBody, ModelRequestBody
+from base_class import Base, PassengerData, DataRequestBody, ModelRequestBody
 from typing import List
 
 from sql_manipulate import \
-    add_passenger_data, add_model_parameter, add_data_model_relation, reset_db
+    engine, add_passenger_data, add_model_parameter, add_data_model_relation, reset_db_rlt, reset_db_mdp, reset_db_psg
 from utils import \
     sql_psg_class_to_df, make_trained_model, dataframe_to_dict, get_psg_cls_list, get_model_cls_list, inference_to_new_data
 from visualize import\
@@ -43,7 +43,7 @@ def GetData(data_request:DataRequestBody):
 
 @app.post("/get_model")
 def GetData(data_request:ModelRequestBody):
-    result_list = get_model_cls_list(data_request.start_index, data_request.end_index)
+    result_list = get_model_cls_list(data_request.version_id_1, data_request.version_id_2)
     return result_list #sqlalchemyのBaseクラス、ただしリクエストの結果として返されるのはjsonを示す文字列のバイナリデータ
 
 @app.post("/train_new_model")
@@ -60,7 +60,7 @@ def TrainNewModel(data_request:DataRequestBody):
         
     return {"transaction_result":transaction_result}
 
-@app.post("/get_model_info")
+@app.post("/evaluate_model")
 def GetModelInfo(model_request:ModelRequestBody):
     
     ######2つのモデルの比較を行う######
@@ -76,8 +76,9 @@ def GetModelInfo(model_request:ModelRequestBody):
     inference_result_2 = None
     if model_request.version_id_2 is not None:
         training_used_data_df_2, inference_result_2 = inference_to_new_data(model_request.version_id_2,model_request.start_index,model_request.end_index,target_psg_cls_list)
-        model_id_list.append(model_request.version_id_2)
-        tr_usd_psg_dict_lists.append(dataframe_to_dict(training_used_data_df_2))
+        if training_used_data_df_2 is not None:
+            model_id_list.append(model_request.version_id_2)
+            tr_usd_psg_dict_lists.append(dataframe_to_dict(training_used_data_df_2))
     #modelを比較するグラフを出力
     plot_model_check_graphs(tr_usd_psg_dict_lists, model_id_list, ['Survived', 'Pclass', 'Sex', 'Age', 'Fare'], 'compare_two_models_training_data')
     
@@ -89,8 +90,11 @@ def GetModelInfo(model_request:ModelRequestBody):
     
     plot_inference_result_graphs(target_psg_cls_list, inference_result_list, model_id_list, ['Survived', 'Pclass', 'Sex', 'Age', 'Fare'], 'inference_result')
     
-    return dataframe_to_dict(training_used_data_df_1)
+    return None
 
-@app.post("/reset_db")
+@app.get("/reset_db")
 def ResetDB():
-    reset_db()
+    result1 = reset_db_psg()
+    result2 = reset_db_mdp()
+    result3 = reset_db_rlt()
+    return [result1, result2, result3]

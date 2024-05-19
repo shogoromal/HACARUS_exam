@@ -10,7 +10,7 @@ import pytz
 import numpy as np
 import pandas as pd
 
-from base_class import Base, PassengerData, sql_PassengerData, sql_ModelParameter, sql_Relation
+from base_class import PassengerData, sql_PassengerData, sql_ModelParameter, sql_Relation
 from typing import List
 
 jst = pytz.timezone('Asia/Tokyo')#タイムゾーンを日本に設定
@@ -85,11 +85,15 @@ def add_model_parameter(model, model_name:str='no_name'):
     db_session.rollback()
     return "false", None
 #モデルのパラメータを取得
-def get_model_parameter(model_version_id:int):
+def get_model_parameter(model_version_id:int=-1):
   try:
-    query = db_session.query(sql_ModelParameter).filter(
-      sql_ModelParameter.model_version_id == model_version_id
-      )
+    if model_version_id == -1:
+          query = db_session.query(sql_ModelParameter)
+          return query.all()
+    else:
+      query = db_session.query(sql_ModelParameter).filter(
+        sql_ModelParameter.model_version_id == model_version_id
+        )
     return query.first()
   except Exception as e:
     print(e)
@@ -141,7 +145,31 @@ def get_data_model_relation(model_version_id:int,include_training=False, start_i
     db_session.rollback()
     return None
 
-def reset_db():
-    # メタデータを用いてすべてのテーブルを削除し再作成
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+#新しいデータを追加する
+def reset_db_rlt():
+  try:
+    db_session.query(sql_Relation).delete()
+    db_session.commit()
+    return "success"
+  except Exception as e:
+    print(e)
+    db_session.rollback()
+    return "false"
+def reset_db_mdp():
+  try:
+    db_session.query(sql_ModelParameter).delete()
+    db_session.commit()
+    return "success"
+  except Exception as e:
+    print(e)
+    db_session.rollback()
+    return "false"
+def reset_db_psg():
+  try:
+    db_session.query(sql_PassengerData).delete()
+    db_session.commit()
+    return "success"
+  except Exception as e:
+    print(e)
+    db_session.rollback()
+    return "false"

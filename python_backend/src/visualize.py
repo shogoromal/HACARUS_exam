@@ -72,6 +72,8 @@ def logit_scatter_plot(target_psg_cls_list:List[sql_PassengerData],global_p_list
     itr_name = ['age', 'sex', 'pclass', 'fare']
     x_position = 1
     for div_p in div_p_list:
+        if div_p[0] == []:
+            break    
         y_position = 1
         for itr, name in zip(itr_list,itr_name):
             if len(global_p_list) == 2:
@@ -81,7 +83,6 @@ def logit_scatter_plot(target_psg_cls_list:List[sql_PassengerData],global_p_list
             ax.scatter(itr[0], div_p[0], color='red', marker='x')
             ax.scatter(itr[1], div_p[1], color='blue', marker='x')
             plt.title(f'Scatter of {name} - model {model_id_list[x_position-1]}')
-            plt.legend()
             y_position += 1
         x_position += 1
         

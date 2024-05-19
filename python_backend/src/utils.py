@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 
 from sql_manipulate import \
-    get_data_model_relation, get_passenger_data, add_data_model_relation
+    get_data_model_relation, get_passenger_data, add_data_model_relation, get_model_parameter
 
 def dataframe_to_dict(df:pd.DataFrame, mode:str='neutral'):
     try:
@@ -43,7 +43,7 @@ def validation_training_data(df:pd.DataFrame, test_size=0):
     X_train = df[['Survived','Pclass','Sex','Age','Fare']].drop('Survived', axis=1)
     y_train = df['Survived']
     # Split the data into training set and test set
-    if test_size is not 0:
+    if test_size != 0:
         X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size, random_state=42)
         return X_train, X_test, y_train, y_test
     return X_train, y_train
@@ -71,18 +71,19 @@ def get_psg_cls_list(start_index:int, end_index:int):
     return result_list
 
 def get_model_cls_list(id_1:int, id_2:int=None):
-    results = get_passenger_data(id_1)
+    result = get_model_parameter(id_1)
     result_list = []
-    for result in results:
-        result_list.append(result)
+    result_list.append(result)
     if id_2 is not None:
-        results = get_passenger_data(id_2)
-        for result in results:
-            result_list.append(result)
+        result = get_model_parameter(id_2)
+        result_list.append(result)
     return result_list 
 
 def get_training_used_datas(model_version_id:int):
     results = get_data_model_relation(model_version_id, True)#第二引数がTrueでトレーニング時に使ったデータを抽出する
+    # resultsが空の場合はNoneを返す
+    if not results:
+        return None
     data_index_list = [re.data_id for re in results] 
     psg_datas = get_passenger_data(data_index_list)
     df = sql_psg_class_to_df(psg_datas)
@@ -92,6 +93,9 @@ def inference_to_new_data(version_id:int, start_index:int, end_index:int, datas_
     ###推論していないdataに対して推論を行う###
     #モデルidからトレーニング時に使ったデータを取得、dfで返される
     training_used_data_df = get_training_used_datas(version_id)
+    #取得できない場合はエラーを返す
+    if training_used_data_df is None:
+        return None, None
     #再度、トレーニングを実施してモデルを再現する
     model = make_trained_model(training_used_data_df)
     #「分析に使うデータ」に対してモデルを使った推論を行い、データベースに登録する
