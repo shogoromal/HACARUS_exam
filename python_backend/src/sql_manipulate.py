@@ -19,7 +19,7 @@ load_dotenv()  # .env ファイルを読み込む
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
-db_name = os.getenv('DATABASE')
+db_name = 'mydatabase'
 
 # engineの設定
 engine = create_engine(f'mysql+mysqlconnector://{user}:{password}@{host}/{db_name}')
