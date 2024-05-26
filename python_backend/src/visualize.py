@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from operator import attrgetter
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 from base_class import GraphSetting, sql_Relation, sql_PassengerData
 from typing import List
@@ -26,7 +26,8 @@ def plot_psg_data(fig, psg_dict_lists:List[dict], model_id_list:List[str], graph
             for psg_dict_list, name in zip(psg_dict_lists, model_id_list):
                 # データをプロット
                 temp_list = [i[key] for i in psg_dict_list]
-                ax.hist(temp_list, label='model-'+str(name), alpha=.5, bins=n_bin, color=gs.colors[color_index])
+                print(key, len(temp_list))
+                ax.hist(temp_list, label='model-'+str(name), alpha=.5, bins=n_bin, color=gs.colors[color_index], range= gs.range.get(key))
                 color_index += 1
             plt.title(f'Histogram of {key}')
             plt.xlabel(key)
@@ -82,6 +83,7 @@ def logit_scatter_plot(target_psg_cls_list:List[sql_PassengerData],global_p_list
                 ax = fig.add_subplot(num, 1, y_position)
             ax.scatter(itr[0], div_p[0], color='red', marker='x')
             ax.scatter(itr[1], div_p[1], color='blue', marker='x')
+            ax.set_ylim(0,1)
             plt.title(f'Scatter of {name} - model {model_id_list[x_position-1]}')
             y_position += 1
         x_position += 1
@@ -130,7 +132,8 @@ def plot_inference_result_graphs(target_psg_cls_list:List[sql_PassengerData], in
     table_columns = ['','model-' + str(model_id_list[0]),'nothing']
     if len(model_id_list) == 2:
         table_columns[2] = 'model-' + str(model_id_list[1])
-    table = [['Accuracy','','']]
+    table = [['Accuracy','',''],
+             ['F1-score','','']]
     
     ###inference_result から予想クラスを算出してaccuracyを算出する
     #data_id順に並び替える
@@ -156,7 +159,8 @@ def plot_inference_result_graphs(target_psg_cls_list:List[sql_PassengerData], in
             prediction_list.append(1 if sigmoid(ir.prediction_score)>0.5 else 0)
             #print(ir.data_id)
 
-        table[0][column_count] = str(accuracy_score(ground_truth_list, prediction_list))
+        table[0][column_count] = str(round(accuracy_score(ground_truth_list, prediction_list),2))
+        table[1][column_count] = str(round(f1_score(ground_truth_list, prediction_list),2))
         column_count += 1
         global_p_list.append(p_list)
         

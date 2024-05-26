@@ -18,7 +18,7 @@ upload_date DATE NOT NULL,
 survived INT,
 pclass INT,
 sex INT,
-age INT,
+age FLOAT,
 fare FLOAT
 );
 
@@ -30,4 +30,30 @@ FOREIGN KEY (model_version_id) REFERENCES models (model_version_id),
 FOREIGN KEY (data_id) REFERENCES datas (data_id),
 prediction_score FLOAT,
 include_training BOOLEAN
+);
+
+CREATE TABLE setting (
+setting_id INT AUTO_INCREMENT PRIMARY KEY,
+best_model_id INT,
+num_for_result_check INT,
+check_type TEXT,
+threshold_percentage FLOAT,
+num_for_re_training INT
+);
+
+INSERT INTO 
+setting (best_model_id, num_for_result_check, check_type, threshold_percentage, num_for_re_training)
+VALUE (1, 10, "accuracy", 0.5, 40);
+
+CREATE TABLE health_check_log (
+health_check_id INT AUTO_INCREMENT PRIMARY KEY,
+model_version_id INT,
+data_id INT,
+setting_id INT,
+FOREIGN KEY (model_version_id) REFERENCES models (model_version_id),
+FOREIGN KEY (data_id) REFERENCES datas (data_id),
+FOREIGN KEY (setting_id) REFERENCES setting (setting_id),
+accuracy_score FLOAT,
+f1_score FLOAT,
+NG_decision BOOLEAN
 );

@@ -14,15 +14,6 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
 
-#  front:
-#    container_name: "hacarus_front"
-#    build: ./nextjs_frontend
-#    volumes:
-#      - ./nextjs_frontend:/nextjs_frontend
-#    ports:
-#      - "3000:3000"
-#    stdin_open: true
-
   mysql:
     build: ./MySQL #Dockerfileからビルドすることを示す
     volumes:
